@@ -28,7 +28,6 @@ let out = "./out";
 
 // 读取projects下的工程
 for (let project of fs.readdirSync(projects)) {
-    // This project stalls forever
     let dir = projects + "/" + project;
     traverse(dir);
 }
