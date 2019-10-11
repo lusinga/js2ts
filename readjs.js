@@ -2,6 +2,8 @@
 const ts = require("typescript");
 const fs = require("fs");
 const path = require("path");
+const fse = require('fs-extra');
+
 function print(x) { console.log(x); }
 const removableLexicalKinds = [
     ts.SyntaxKind.EndOfFileToken,
@@ -88,9 +90,12 @@ function extractAlignedSequences(inputDirectory) {
                 console.log(memSource.length + ", " + memToken.length);
             let outFile = sourceFile.fileName.replace("projects", "out")
             console.log('outFile=',outFile);
-            fs.writeFileSync(outFile, memSource.filter(val => val.length > 0).join(" "), 'utf-8');
-            fs.writeFileSync(outFile + ".ttokens", memToken.filter(val => val.length > 0).join(" "), 'utf-8');
-            fs.writeFileSync(outFile + ".ttokens.gold", memGoldToken.filter(val => val.length > 0).join(" "), 'utf-8');
+            fse.outputFileSync(outFile, memSource.filter(val => val.length > 0).join(" "), 'utf-8');
+            fse.outputFileSync(outFile + ".ttokens", memToken.filter(val => val.length > 0).join(" "), 'utf-8');
+            fse.outputFileSync(outFile + ".ttokens.gold", memGoldToken.filter(val => val.length > 0).join(" "), 'utf-8');
+            // fs.writeFileSync(outFile, memSource.filter(val => val.length > 0).join(" "), 'utf-8');
+            // fs.writeFileSync(outFile + ".ttokens", memToken.filter(val => val.length > 0).join(" "), 'utf-8');
+            // fs.writeFileSync(outFile + ".ttokens.gold", memGoldToken.filter(val => val.length > 0).join(" "), 'utf-8');
         }
         catch (e) {
             console.log(e);
@@ -229,6 +234,7 @@ function walkSync(dir, filelist) {
         }
         catch (e) {
             console.error("Error processing " + file);
+            console.log(e);
         }
     });
     return filelist;
