@@ -1,0 +1,22 @@
+{
+  "name": "js2ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "readjs.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lusinga/js2ts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lusinga/js2ts/issues"
+  },
+  "homepage": "https://github.com/lusinga/js2ts#readme",
+  "dependencies": {
+    "typescript": "^3.6.4"
+  }
+}
