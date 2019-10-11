@@ -20,6 +20,8 @@ const templateKinds = [
     ts.SyntaxKind.TemplateMiddle
 ];
 
+const manifest_json = 'manifest.json';
+
 // 默认的工程目录
 let projects = "./projects";
 let out = "./out";
@@ -33,8 +35,9 @@ for (let project of fs.readdirSync(projects)) {
 
 function traverse(dir) {
     var children = fs.readdirSync(dir);
-    if (children.find(value => value == "tsconfig.json")) {
-        print("Config in: " + dir);
+
+    if (children.find(value => value == manifest_json)) {
+        print("Found manifest.json in: " + dir);
         extractAlignedSequences(dir);
     }
     else {
@@ -67,6 +70,7 @@ function extractAlignedSequences(inputDirectory) {
         checker = program.getTypeChecker();
     }
     catch (err) {
+        console.log("Checker error!"+err)
         return null;
     }
     for (const sourceFile of program.getSourceFiles()) {
@@ -77,16 +81,17 @@ function extractAlignedSequences(inputDirectory) {
             let relativePath = path.relative(inputDirectory, filename);
             if (relativePath.startsWith(".."))
                 continue;
-            let memS = [];
-            let memT = [];
-            let memP = [];
-            extractTokens(sourceFile, checker, memS, memT, memP);
-            if (memS.length != memT.length)
-                console.log(memS.length + ", " + memT.length);
-            // Write tokens to "Cleaned" repos directory (work in a copy to be safe) and write 'true' types to a separate file there
-            fs.writeFileSync(sourceFile.fileName.replace(repos, cleaned), memS.filter(val => val.length > 0).join(" "), 'utf-8');
-            fs.writeFileSync(sourceFile.fileName.replace(repos, cleaned) + ".ttokens", memT.filter(val => val.length > 0).join(" "), 'utf-8');
-            fs.writeFileSync(sourceFile.fileName.replace(repos, cleaned) + ".ttokens.gold", memP.filter(val => val.length > 0).join(" "), 'utf-8');
+            let memSource = [];
+            let memToken = [];
+            let memGoldToken = [];
+            extractTokens(sourceFile, checker, memSource, memToken, memGoldToken);
+            if (memSource.length != memToken.length)
+                console.log(memSource.length + ", " + memToken.length);
+            let outFile = sourceFile.fileName.replace("projects", "out")
+            console.log('outFile=',outFile);
+            fs.writeFileSync(outFile, memSource.filter(val => val.length > 0).join(" "), 'utf-8');
+            fs.writeFileSync(outFile + ".ttokens", memToken.filter(val => val.length > 0).join(" "), 'utf-8');
+            fs.writeFileSync(outFile + ".ttokens.gold", memGoldToken.filter(val => val.length > 0).join(" "), 'utf-8');
         }
         catch (e) {
             console.log(e);
@@ -94,7 +99,8 @@ function extractAlignedSequences(inputDirectory) {
         }
     }
 }
-function extractTokens(tree, checker, memS, memT, memP) {
+
+function extractTokens(tree, checker, memSource, memToken, memTokenGold) {
     var justPopped = false;
     for (var i in tree.getChildren()) {
         var ix = parseInt(i);
@@ -105,9 +111,9 @@ function extractTokens(tree, checker, memS, memT, memP) {
         }
         // Tentatively remove all templates as these substantially hinder type/token alignment; to be improved in the future
         else if (templateKinds.indexOf(child.kind) != -1) {
-            memS.push("`template`");
-            memT.push("O");
-            memP.push("O");
+            memSource.push("`template`");
+            memToken.push("O");
+            memTokenGold.push("O");
             continue;
         }
         if (child.getChildCount() == 0) {
@@ -159,7 +165,7 @@ function extractTokens(tree, checker, memS, memT, memP) {
                 if (parentKind.toLowerCase().indexOf("template") >= 0)
                     target = "O";
             }
-            if (memS.length > 0 && memS[memS.length - 1] == ":" && Boolean(source.match("[a-zA-Z$_][0-9a-zA-Z$_\[\]]*"))) {
+            if (memSource.length > 0 && memSource[memSource.length - 1] == ":" && Boolean(source.match("[a-zA-Z$_][0-9a-zA-Z$_\[\]]*"))) {
                 var k = tree.kind;
                 var t = tree;
                 var valid = k == ts.SyntaxKind.FunctionDeclaration || k == ts.SyntaxKind.MethodDeclaration || k == ts.SyntaxKind.Parameter || k == ts.SyntaxKind.VariableDeclaration;
@@ -169,24 +175,24 @@ function extractTokens(tree, checker, memS, memT, memP) {
                     valid = k == ts.SyntaxKind.FunctionDeclaration || k == ts.SyntaxKind.MethodDeclaration || k == ts.SyntaxKind.Parameter || k == ts.SyntaxKind.VariableDeclaration;
                 }
                 if (valid) {
-                    memS.pop();
-                    memT.pop();
-                    memP.pop();
+                    memSource.pop();
+                    memToken.pop();
+                    memTokenGold.pop();
                     if (k == ts.SyntaxKind.FunctionDeclaration || k == ts.SyntaxKind.MethodDeclaration) {
                         let toFind = t.name.escapedText;
                         let index = -1;
-                        for (let i = memS.length - 1; i >= 0; i--) {
-                            if (toFind == memS[i] || toFind.substring(1) == memS[i]) {
+                        for (let i = memSource.length - 1; i >= 0; i--) {
+                            if (toFind == memSource[i] || toFind.substring(1) == memSource[i]) {
                                 index = i;
                                 break;
                             }
                         }
-                        memT[index] = "$" + source + "$"
-                        memP[index] = "$" + source + "$"
+                        memToken[index] = "$" + source + "$"
+                        memTokenGold[index] = "$" + source + "$"
                     }
                     else {
-                        memT[memT.length - 1] = "$" + source + "$";
-                        memP[memP.length - 1] = "$" + source + "$";
+                        memToken[memToken.length - 1] = "$" + source + "$";
+                        memTokenGold[memTokenGold.length - 1] = "$" + source + "$";
                     }
                     justPopped = true;
                     continue;
@@ -198,12 +204,12 @@ function extractTokens(tree, checker, memS, memT, memP) {
                 else
                     justPopped = false;
             }
-            memS.push(source);
-            memT.push(target);
-            memP.push("O");
+            memSource.push(source);
+            memToken.push(target);
+            memTokenGold.push("O");
         }
         else {
-            extractTokens(child, checker, memS, memT, memP);
+            extractTokens(child, checker, memSource, memToken, memTokenGold);
         }
     }
 }
@@ -228,4 +234,3 @@ function walkSync(dir, filelist) {
     });
     return filelist;
 }
-;
