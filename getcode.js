@@ -7,7 +7,7 @@ const instance = axios.create({
 async function get_complete() {
     try {
       const response = await instance.get('/code/test2');
-      console.log(response);
+      console.log(response.data);
     } catch (error) {
       console.error(error);
     }
