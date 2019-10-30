@@ -1,0 +1,1 @@
+"use strict" ; const Model = require ( "yunos/appmodel/Model" ) ; class HomeModel extends Model { initProperties ( ) { return { message : "Hello World" , count : 0 } ; } tick ( ) { this . message = `template` ; } } module . exports = HomeModel ;

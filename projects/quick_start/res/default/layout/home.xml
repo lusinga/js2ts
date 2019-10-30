@@ -1,0 +1,3 @@
+<CompositeView id="home" layout="{layout.home}" propertySetName="home">
+    <TextView id="title" text="{{message}}" />
+</CompositeView>

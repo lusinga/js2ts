@@ -1,0 +1,13 @@
+{
+    "home": {
+        "type": "RelativeLayout",
+        "params": {
+            "title": {
+                "align": {
+                    "middle": "parent",
+                    "center": "parent"
+                }
+            }
+        }
+    }
+}

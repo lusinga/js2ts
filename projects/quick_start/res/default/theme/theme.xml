@@ -1,0 +1,8 @@
+<theme name="default">
+    <property-set name="home">
+        <id name="title">
+            <property name="color">#02c57e</property>
+            <property name="fontSize">50dp</property>
+        </id>
+    </property-set>
+</theme>
