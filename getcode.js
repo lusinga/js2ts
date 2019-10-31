@@ -6,11 +6,19 @@ const instance = axios.create({
 
 async function get_complete() {
     try {
-      const response = await instance.get('/code/test2');
+      const response = await instance.get('/code/test');
       console.log(response.data);
     } catch (error) {
       console.error(error);
     }
 }
 
-get_complete();
+instance.post('/complete', {code:'#include <iostream>试试中文行不行'})
+.then(function (response) {
+  console.log('complete: '+response.data);
+})
+.catch(function (error) {
+  console.log(error);
+});
+
+//get_complete();
